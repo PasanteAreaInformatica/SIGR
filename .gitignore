@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Entorno virtual
+venv/
+env/
+.venv/
+
+# Variables de entorno
+.env
+
+# Archivos estáticos compilados
+staticfiles/
+
+# Migraciones (opcional si quieres ignorarlas)
+# */migrations/*
+# !*/migrations/__init__.py
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
