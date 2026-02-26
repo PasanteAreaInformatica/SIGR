@@ -68,22 +68,24 @@ class Ticket(models.Model):
         return f"Ticket #{self.id} - {self.estado}"
 
     def save(self, *args, **kwargs):
-        self.full_clean()  # 👈 Fuerza validaciones
 
-        if not self.pk:
-            if not self.estado:
-                self.estado = TicketEstado.objects.get(nombre="OPEN")
-        else:
+        self.full_clean()  # Fuerza validaciones
+
+        if self.pk:
             old = Ticket.objects.get(pk=self.pk)
+
             if old.estado != self.estado:
                 self.fecha_cambio_estado = timezone.now()
 
                 if self.estado.nombre == "CLOSED":
                     self.fecha_cierre = timezone.now()
 
+        else:
+            # Si es nuevo y no tiene estado, asignar OPEN
+            if not self.estado:
+                self.estado = TicketEstado.objects.get(nombre="OPEN")
+
         super().save(*args, **kwargs)
-        
-    from django.core.exceptions import ValidationError
 
     def clean(self):
 
@@ -125,8 +127,9 @@ class Ticket(models.Model):
     def puede_cambiar_estado(self, user):
         if self.estado.nombre == "CLOSED":
             return False
-
-        return user.rol.nombre in ["ADMIN", "TECNICO"]
+        if not user.rol:
+            return False
+        return user.rol.nombre in [Role.ADMIN, Role.TECNICO]
     
     def cambio_estado_valido(self, nuevo_estado):
         flujo = {

@@ -1,0 +1,27 @@
+<h2>Lista de Tickets</h2>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Estado</th>
+        <th>Prioridad</th>
+        <th>Creado por</th>
+        <th>Fecha creación</th>
+    </tr>
+
+    {% for ticket in tickets %}
+    <tr>
+        <td>{{ ticket.id }}</td>
+        <td>{{ ticket.estado.nombre }}</td>
+        <td>{{ ticket.prioridad }}</td>
+        <td>{{ ticket.usuario_crea.username }}</td>
+        <td>{{ ticket.fecha_creacion }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5">No hay tickets disponibles.</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{% url 'crear_ticket' %}">Crear nuevo ticket</a>
