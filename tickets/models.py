@@ -69,25 +69,19 @@ class Ticket(models.Model):
 
     def save(self, *args, **kwargs):
 
-        self.full_clean()  # Fuerza validaciones
+        self.full_clean()
 
-        if self.pk:
-            old = Ticket.objects.get(pk=self.pk)
-
-            if old.estado != self.estado:
-                self.fecha_cambio_estado = timezone.now()
-
-                if self.estado.nombre == "CLOSED":
-                    self.fecha_cierre = timezone.now()
-
-        else:
-            # Si es nuevo y no tiene estado, asignar OPEN
+        if not self.pk:
             if not self.estado:
                 self.estado = TicketEstado.objects.get(nombre="OPEN")
 
         super().save(*args, **kwargs)
 
     def clean(self):
+
+        # 🔹 Si aún no tiene estado asignado, no validar nada
+        if not self.estado_id:
+            return
 
         # 1️⃣ No permitir cerrar sin observaciones
         if self.estado.nombre == "CLOSED" and not self.observaciones:
@@ -100,13 +94,6 @@ class Ticket(models.Model):
             # 2.1 No permitir modificar si ya está cerrado
             if old.estado.nombre == "CLOSED":
                 raise ValidationError("No se puede modificar un ticket cerrado.")
-
-            # 2.2 Validar flujo de estados
-            if old.estado != self.estado:
-                if not self.cambio_estado_valido(self.estado.nombre):
-                    raise ValidationError(
-                        f"No se permite cambiar de {old.estado.nombre} a {self.estado.nombre}"
-                    )
                 
     def puede_editar(self, user):
 
@@ -134,9 +121,36 @@ class Ticket(models.Model):
     def cambio_estado_valido(self, nuevo_estado):
         flujo = {
             "OPEN": ["IN_PROGRESS"],
-            "IN_PROGRESS": ["RESOLVED"],
-            "RESOLVED": ["CLOSED", "IN_PROGRESS"],
+            "IN_PROGRESS": ["CLOSED"],
             "CLOSED": []
         }
-
         return nuevo_estado in flujo.get(self.estado.nombre, [])
+    
+    def cambiar_estado(self, nuevo_estado, user, observaciones=None):
+
+        if user.rol.nombre not in ["ADMIN", "TECNICO"]:
+            raise ValidationError("No tienes permiso para cambiar el estado.")
+
+        if not self.cambio_estado_valido(nuevo_estado.nombre):
+            raise ValidationError("Cambio de estado no permitido.")
+
+        # 🔹 Solo registrar fecha cuando pasa a IN_PROGRESS
+        if (
+            self.estado.nombre == "OPEN"
+            and nuevo_estado.nombre == "IN_PROGRESS"
+            and not self.fecha_cambio_estado
+        ):
+            self.fecha_cambio_estado = timezone.now()
+
+        # 🔹 Si pasa a CLOSED
+        if nuevo_estado.nombre == "CLOSED":
+            if not observaciones:
+                raise ValidationError("Debe agregar observaciones para cerrar el ticket.")
+
+            self.observaciones = observaciones
+            self.fecha_cierre = timezone.now()
+
+        self.estado = nuevo_estado
+
+        self.full_clean()
+        self.save()

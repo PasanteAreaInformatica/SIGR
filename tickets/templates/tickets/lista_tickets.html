@@ -1,5 +1,43 @@
 <h2>Lista de Tickets</h2>
 
+<form method="get">
+
+    <label>ID:</label>
+    <input type="number" name="id" value="{{ id_actual|default:'' }}">
+
+    <label>Estado:</label>
+    <select name="estado">
+        <option value="">Todos</option>
+        <option value="OPEN">Open</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="CLOSED">Closed</option>
+    </select>
+
+    <label>Prioridad:</label>
+    <select name="prioridad">
+        <option value="">Todas</option>
+        <option value="LOW">Low</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="HIGH">High</option>
+        <option value="CRITICAL">Critical</option>
+    </select>
+
+    <label>Fecha desde:</label>
+    <input type="date" name="fecha_inicio" value="{{ fecha_inicio_actual|default:'' }}">
+
+    <label>Fecha hasta:</label>
+    <input type="date" name="fecha_fin" value="{{ fecha_fin_actual|default:'' }}">
+
+    <button type="submit">Filtrar</button>
+
+</form>
+
+{% if request.user.rol.nombre == "ADMIN" or request.user.rol.nombre == "TECNICO" %}
+    <a href="{% url 'exportar_tickets' %}?{{ request.GET.urlencode }}">
+        <button type="button">Exportar a Excel</button>
+    </a>
+{% endif %}
+
 <table border="1">
     <tr>
         <th>ID</th>
@@ -11,7 +49,11 @@
 
     {% for ticket in tickets %}
     <tr>
-        <td>{{ ticket.id }}</td>
+        <td>
+            <a href="{% url 'detalle_ticket' ticket.id %}">
+                {{ ticket.id }}
+            </a>
+        </td>
         <td>{{ ticket.estado.nombre }}</td>
         <td>{{ ticket.prioridad }}</td>
         <td>{{ ticket.usuario_crea.username }}</td>
