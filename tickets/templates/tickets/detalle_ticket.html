@@ -1,42 +1,114 @@
-<h2>Detalle Ticket #{{ ticket.id }}</h2>
+{% extends "base.html" %}
 
+{% block title %}Detalle Ticket{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-4">Detalle Ticket #{{ ticket.id }}</h3>
+
+<!-- 🔔 MENSAJES -->
 {% if messages %}
     {% for message in messages %}
-        <p style="color:red;">{{ message }}</p>
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
     {% endfor %}
 {% endif %}
 
-<p><strong>Tipo de falla:</strong> {{ ticket.tipo_falla }}</p>
-<p><strong>Prioridad:</strong> {{ ticket.prioridad }}</p>
-<p><strong>Descripción:</strong> {{ ticket.descripcion }}</p>
-<p><strong>Estado:</strong> {{ ticket.estado.nombre }}</p>
-<p><strong>Creado por:</strong> {{ ticket.usuario_crea }}</p>
-<p><strong>Fecha creación:</strong> {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</p>
-<p><strong>Cambio estado:</strong> {{ ticket.fecha_cambio_estado|date:"d/m/Y H:i" }}</p>
+<div class="row">
 
+    <!-- 📋 INFORMACIÓN -->
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <p><strong>Tipo de falla:</strong> {{ ticket.tipo_falla }}</p>
+                <p><strong>Prioridad:</strong> {{ ticket.prioridad }}</p>
+                <p><strong>Descripción:</strong></p>
+                <div class="border rounded p-3 bg-light">
+                    {{ ticket.descripcion }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 ESTADO -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <h5 class="mb-3">Información del Ticket</h5>
+
+                <p>
+                    <strong>Estado:</strong>
+                    <span class="badge
+                        {% if ticket.estado.nombre == 'OPEN' %}bg-secondary
+                        {% elif ticket.estado.nombre == 'IN_PROGRESS' %}bg-warning text-dark
+                        {% elif ticket.estado.nombre == 'CLOSED' %}bg-success
+                        {% endif %}
+                    ">
+                        {{ ticket.estado.nombre }}
+                    </span>
+                </p>
+
+                <p><strong>Creado por:</strong> {{ ticket.usuario_crea.username }}</p>
+                <p><strong>Fecha creación:</strong> {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                <p><strong>Cambio estado:</strong> {{ ticket.fecha_cambio_estado|date:"d/m/Y H:i" }}</p>
+
+                {% if ticket.fecha_cierre %}
+                    <p><strong>Fecha cierre:</strong> {{ ticket.fecha_cierre|date:"d/m/Y H:i" }}</p>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- 🔄 ACCIONES -->
 {% if request.user.rol.nombre == "ADMIN" or request.user.rol.nombre == "TECNICO" %}
 
-    {% if ticket.estado.nombre == "OPEN" %}
-        <form method="post" action="{% url 'cambiar_estado' ticket.id %}">
-            {% csrf_token %}
-            <input type="hidden" name="estado" value="IN_PROGRESS">
-            <button type="submit">Pasar a IN_PROGRESS</button>
-        </form>
-    {% endif %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
 
-    {% if ticket.estado.nombre == "IN_PROGRESS" %}
-        <form method="post" action="{% url 'cambiar_estado' ticket.id %}">
-            {% csrf_token %}
-            <input type="hidden" name="estado" value="CLOSED">
-            <textarea name="observaciones" placeholder="Observaciones de cierre"></textarea>
-            <button type="submit">Cerrar Ticket</button>
-        </form>
-    {% endif %}
+            <h5 class="mb-3">Acciones</h5>
+
+            {% if ticket.estado.nombre == "OPEN" %}
+                <form method="post" action="{% url 'cambiar_estado' ticket.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="estado" value="IN_PROGRESS">
+                    <button type="submit" class="btn btn-warning">
+                        Pasar a IN_PROGRESS
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if ticket.estado.nombre == "IN_PROGRESS" %}
+                <form method="post" action="{% url 'cambiar_estado' ticket.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="estado" value="CLOSED">
+
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones de cierre</label>
+                        <textarea name="observaciones" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">
+                        Cerrar Ticket
+                    </button>
+                </form>
+            {% endif %}
+
+        </div>
+    </div>
 
 {% endif %}
 
-{% if ticket.fecha_cierre %}
-    <p><strong>Fecha cierre:</strong> {{ ticket.fecha_cierre|date:"d/m/Y H:i" }}</p>
-{% endif %}
+<!-- 🔙 VOLVER -->
+<a href="{% url 'lista_tickets' %}" class="btn btn-secondary">
+    Volver al Dashboard
+</a>
 
-<a href="{% url 'lista_tickets' %}">Volver</a>
+{% endblock %}
