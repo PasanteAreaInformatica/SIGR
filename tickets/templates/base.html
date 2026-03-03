@@ -13,7 +13,7 @@
     <div class="container">
 
         <a class="navbar-brand" href="#">
-            Sistema Tickets
+            Sistema Integral de Gestion de Requerimientos 
         </a>
 
         <div class="collapse navbar-collapse justify-content-end">
@@ -23,9 +23,12 @@
                 {% if user.is_authenticated %}
 
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'lista_tickets' %}">
-                            Dashboard
-                        </a>
+                        <form method="post" action="{% url 'lista_tickets' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light btn-sm ms-2">
+                                Menu principal
+                            </button>
+                        </form>
                     </li>
 
                     <li class="nav-item">

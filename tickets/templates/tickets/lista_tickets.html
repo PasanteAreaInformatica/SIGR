@@ -1,10 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Menu principal{% endblock %}
 
 {% block content %}
 
-<h3 class="mb-4">Dashboard de Tickets</h3>
+<h3 class="mb-4">Tablero de Tickets</h3>
+
+<div class="row mb-3 g-2">
+
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 py-0 bg-secondary text-white">
+            <div class="card-body p-0">
+                <small>ABIERTO</small>
+                <h5 class="mb-0">{{ open_count }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 py-0 bg-warning">
+            <div class="card-body p-0">
+                <small>EN PROCESO</small>
+                <h5 class="mb-0">{{ in_progress_count }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 py-0 bg-success text-white">
+            <div class="card-body p-0">
+                <small>CERRADO</small>
+                <h5 class="mb-0">{{ closed_count }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 py-0 bg-primary text-white">
+            <div class="card-body p-0">
+                <small>TOTAL</small>
+                <h5 class="mb-0">{{ total }}</h5>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 <!-- 🔎 FILTROS -->
 <div class="card mb-4 shadow-sm">
@@ -20,9 +60,9 @@
                 <label class="form-label">Estado</label>
                 <select name="estado" class="form-select">
                     <option value="">Todos</option>
-                    <option value="OPEN">Open</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="CLOSED">Closed</option>
+                    <option value="OPEN">Abierto</option>
+                    <option value="IN_PROGRESS">En proceso</option>
+                    <option value="CLOSED">Cerrado</option>
                 </select>
             </div>
 
@@ -123,8 +163,38 @@
     </div>
 </div>
 
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">&laquo; Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+            </li>
+        {% endif %}
+
+    </ul>
+</nav>
+
 <!-- ➕ CREAR -->
-<div class="mt-3">
+<div class="mt-3 mb-3">
     <a href="{% url 'crear_ticket' %}" class="btn btn-primary">
         Crear nuevo ticket
     </a>

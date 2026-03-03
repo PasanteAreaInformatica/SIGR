@@ -29,6 +29,14 @@
                     {{ ticket.descripcion }}
                 </div>
 
+                {% if ticket.estado.nombre == "CLOSED" and ticket.observaciones %}
+                    <hr>
+                    <p><strong>Observaciones de cierre:</strong></p>
+                    <div class="border rounded p-3 bg-light">
+                        {{ ticket.observaciones }}
+                    </div>
+                {% endif %}
+
             </div>
         </div>
     </div>
@@ -59,6 +67,7 @@
                 {% if ticket.fecha_cierre %}
                     <p><strong>Fecha cierre:</strong> {{ ticket.fecha_cierre|date:"d/m/Y H:i" }}</p>
                 {% endif %}
+
 
             </div>
         </div>
@@ -100,7 +109,6 @@
                     </button>
                 </form>
             {% endif %}
-
         </div>
     </div>
 

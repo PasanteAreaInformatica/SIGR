@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from datetime import datetime
+from django.core.paginator import Paginator
 
 @login_required
 def crear_ticket(request):
@@ -35,23 +36,26 @@ def lista_tickets(request):
 
     user = request.user
 
-    # 🔹 Base queryset según rol
+    # 🔹 Base queryset según rol (SIN filtros)
     if not user.rol:
-        tickets = Ticket.objects.all()
+        base_tickets = Ticket.objects.all()
 
     elif user.rol.nombre == Role.ADMIN:
-        tickets = Ticket.objects.all()
+        base_tickets = Ticket.objects.all()
 
     elif user.rol.nombre == Role.TECNICO:
-        tickets = Ticket.objects.all()
+        base_tickets = Ticket.objects.all()
 
     elif user.rol.nombre == Role.ADMINISTRATIVO:
-        tickets = Ticket.objects.filter(usuario_crea=user)
+        base_tickets = Ticket.objects.filter(usuario_crea=user)
 
     else:
-        tickets = Ticket.objects.none()
+        base_tickets = Ticket.objects.none()
 
-    # 🔹 -------- FILTROS --------
+    # 🔹 Copia para aplicar filtros
+    tickets = base_tickets
+
+    # -------- FILTROS --------
 
     estado = request.GET.get("estado")
     prioridad = request.GET.get("prioridad")
@@ -74,13 +78,29 @@ def lista_tickets(request):
     if fecha_fin:
         tickets = tickets.filter(fecha_creacion__date__lte=fecha_fin)
 
+    # 📊 ESTADÍSTICAS (sobre base sin filtros)
+    total = base_tickets.count()
+    open_count = base_tickets.filter(estado__nombre="OPEN").count()
+    in_progress_count = base_tickets.filter(estado__nombre="IN_PROGRESS").count()
+    closed_count = base_tickets.filter(estado__nombre="CLOSED").count()
+
+    # 🔹 PAGINACIÓN
+    paginator = Paginator(tickets.order_by("-fecha_creacion"), 20)  # 10 por página
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        "tickets": tickets,
+        "tickets": page_obj,  #  ahora enviamos page_obj
+        "page_obj": page_obj,
         "estado_actual": estado,
         "prioridad_actual": prioridad,
         "id_actual": ticket_id,
         "fecha_inicio_actual": fecha_inicio,
         "fecha_fin_actual": fecha_fin,
+        "total": total,
+        "open_count": open_count,
+        "in_progress_count": in_progress_count,
+        "closed_count": closed_count,
     }
 
     return render(request, "tickets/lista_tickets.html", context)
