@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Detalle Ticket{% endblock %}
+{% block title %}Detalle Requerimiento{% endblock %}
 
 {% block content %}
 
-<h3 class="mb-4">Detalle Ticket #{{ ticket.id }}</h3>
+<h3 class="mb-4">Detalle requerimiento #{{ ticket.id }}</h3>
 
 <!-- 🔔 MENSAJES -->
 {% if messages %}
@@ -23,7 +23,7 @@
             <div class="card-body">
 
                 <p><strong>Tipo de falla:</strong> {{ ticket.tipo_falla }}</p>
-                <p><strong>Prioridad:</strong> {{ ticket.prioridad }}</p>
+                <p><strong>Prioridad:</strong> {{ ticket.get_prioridad_display }}</p>
                 <p><strong>Descripción:</strong></p>
                 <div class="border rounded p-3 bg-light">
                     {{ ticket.descripcion }}
@@ -46,17 +46,17 @@
         <div class="card shadow-sm mb-4">
             <div class="card-body">
 
-                <h5 class="mb-3">Información del Ticket</h5>
+                <h5 class="mb-3">Información del Requerimiento</h5>
 
                 <p>
                     <strong>Estado:</strong>
                     <span class="badge
-                        {% if ticket.estado.nombre == 'OPEN' %}bg-secondary
-                        {% elif ticket.estado.nombre == 'IN_PROGRESS' %}bg-warning text-dark
-                        {% elif ticket.estado.nombre == 'CLOSED' %}bg-success
+                        {% if ticket.estado.nombre == 'OPEN' %}badge-abierto
+                        {% elif ticket.estado.nombre == 'IN_PROGRESS' %}badge-proceso
+                        {% elif ticket.estado.nombre == 'CLOSED' %}badge-cerrado
                         {% endif %}
                     ">
-                        {{ ticket.estado.nombre }}
+                        {{ ticket.estado.descripcion }}
                     </span>
                 </p>
 
@@ -88,8 +88,8 @@
                 <form method="post" action="{% url 'cambiar_estado' ticket.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="estado" value="IN_PROGRESS">
-                    <button type="submit" class="btn btn-warning">
-                        Pasar a IN_PROGRESS
+                    <button type="submit" class="btn btn-secondary">
+                        Pasar a en proceso
                     </button>
                 </form>
             {% endif %}
@@ -104,7 +104,7 @@
                         <textarea name="observaciones" class="form-control" rows="3" required></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-secondary">
                         Cerrar Ticket
                     </button>
                 </form>
@@ -115,7 +115,7 @@
 {% endif %}
 
 <!-- 🔙 VOLVER -->
-<a href="{% url 'lista_tickets' %}" class="btn btn-secondary">
+<a href="{% url 'lista_tickets' %}" class="btn btn-secondary mb-4">
     Volver al Dashboard
 </a>
 

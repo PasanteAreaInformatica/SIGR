@@ -18,7 +18,8 @@ class TipoFalla(models.Model):
 # ESTADO DEL TICKET
 # =========================
 class TicketEstado(models.Model):
-    nombre = models.CharField(max_length=30, unique=True)
+    nombre = models.CharField(max_length=30, unique=True)  # código técnico
+    descripcion = models.CharField(max_length=50, null=True)
 
     def __str__(self):
         return self.nombre
@@ -30,10 +31,10 @@ class TicketEstado(models.Model):
 class Ticket(models.Model):
     
     class Prioridad(models.TextChoices):
-        LOW = "LOW", "Low"
-        MEDIUM = "MEDIUM", "Medium"
-        HIGH = "HIGH", "High"
-        CRITICAL = "CRITICAL", "Critical"
+        LOW = "LOW", "Bajo"
+        MEDIUM = "MEDIUM", "Medio"
+        HIGH = "HIGH", "Alto"
+        CRITICAL = "CRITICAL", "Critico"
 
     usuario_crea = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -10,25 +10,25 @@
         <div class="card shadow">
             <div class="card-body">
 
-                <h4 class="card-title text-center mb-4">
+                <h4 class="card-title text-center mb-2">
                     Iniciar sesión
                 </h4>
 
                 <form method="post">
                     {% csrf_token %}
 
-                    <div class="mb-3 text-center">
+                    <div class="mb-3 d-grid">
                         {{ form.username.label_tag }}
                         {{ form.username }}
                     </div>
 
-                    <div class="mb-3 text-center">
+                    <div class="mb-3 d-grid">
                         {{ form.password.label_tag }}
                         {{ form.password }}
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-secondary">
                             Entrar
                         </button>
                     </div>

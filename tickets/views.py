@@ -60,6 +60,7 @@ def lista_tickets(request):
     estado = request.GET.get("estado")
     prioridad = request.GET.get("prioridad")
     ticket_id = request.GET.get("id")
+    sede = request.GET.get("sede")
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
 
@@ -77,6 +78,9 @@ def lista_tickets(request):
 
     if fecha_fin:
         tickets = tickets.filter(fecha_creacion__date__lte=fecha_fin)
+
+    if sede:
+        tickets = tickets.filter(usuario_crea__sede__nombre=sede)
 
     # 📊 ESTADÍSTICAS (sobre base sin filtros)
     total = base_tickets.count()
@@ -101,6 +105,7 @@ def lista_tickets(request):
         "open_count": open_count,
         "in_progress_count": in_progress_count,
         "closed_count": closed_count,
+        "sede_actual": sede,
     }
 
     return render(request, "tickets/lista_tickets.html", context)
@@ -154,25 +159,23 @@ def exportar_tickets_excel(request):
     if user.rol.nombre not in [Role.ADMIN, Role.TECNICO]:
         return HttpResponse("No tienes permiso para exportar.", status=403)
 
-    # 🔹 Base queryset según rol
-    if user.rol.nombre == Role.ADMIN:
-        tickets = Ticket.objects.all()
+    # 🔹 Base queryset optimizado
+    tickets = Ticket.objects.select_related(
+        "estado",
+        "usuario_crea",
+        "usuario_crea__sede"
+    )
 
-    elif user.rol.nombre == Role.TECNICO:
-        tickets = Ticket.objects.all()
-
-    else:
-        tickets = Ticket.objects.none()
-
-    # 🔹 Aplicar los mismos filtros que la lista
+    # 🔹 Aplicar filtros
     estado = request.GET.get("estado")
     prioridad = request.GET.get("prioridad")
     ticket_id = request.GET.get("id")
+    sede = request.GET.get("sede")
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
 
-    if ticket_id:
-        tickets = tickets.filter(id=ticket_id)
+    if ticket_id and ticket_id.isdigit():
+        tickets = tickets.filter(id=int(ticket_id))
 
     if estado:
         tickets = tickets.filter(estado__nombre=estado)
@@ -186,6 +189,9 @@ def exportar_tickets_excel(request):
     if fecha_fin:
         tickets = tickets.filter(fecha_creacion__date__lte=fecha_fin)
 
+    if sede:
+        tickets = tickets.filter(usuario_crea__sede__nombre=sede)
+
     # 📊 Crear Excel
     wb = Workbook()
     ws = wb.active
@@ -196,6 +202,7 @@ def exportar_tickets_excel(request):
         "Estado",
         "Prioridad",
         "Usuario Creador",
+        "Sede del usuario",
         "Fecha Creación",
         "Fecha Inicio Gestión",
         "Fecha Cierre",
@@ -205,23 +212,41 @@ def exportar_tickets_excel(request):
 
     ws.append(headers)
 
-    # Encabezados en negrita
+    # 🔹 Encabezados en negrita
     for cell in ws[1]:
         cell.font = Font(bold=True)
 
-    # Agregar datos
+    # 🔹 Agregar datos
     for ticket in tickets:
         ws.append([
             ticket.id,
-            ticket.estado.nombre,
-            ticket.prioridad,
+            ticket.estado.descripcion,
+            ticket.get_prioridad_display(),
             ticket.usuario_crea.username,
+            ticket.usuario_crea.sede.nombre if ticket.usuario_crea.sede else "",
             ticket.fecha_creacion.replace(tzinfo=None) if ticket.fecha_creacion else None,
             ticket.fecha_cambio_estado.replace(tzinfo=None) if ticket.fecha_cambio_estado else None,
             ticket.fecha_cierre.replace(tzinfo=None) if ticket.fecha_cierre else None,
             ticket.descripcion,
             ticket.observaciones,
         ])
+
+    # 🔹 Activar filtros automáticos
+    ws.auto_filter.ref = ws.dimensions
+
+    # 🔹 Congelar primera fila
+    ws.freeze_panes = "A2"
+
+    # 🔹 Ajustar ancho automático
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+
+        for cell in column:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+
+        ws.column_dimensions[column_letter].width = max_length + 2
 
     # 📥 Respuesta HTTP
     response = HttpResponse(
@@ -234,3 +259,4 @@ def exportar_tickets_excel(request):
     wb.save(response)
 
     return response
+
